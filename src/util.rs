@@ -1,5 +1,7 @@
-use mime::{Mime, TopLevel, SubLevel};
+use std::str::FromStr;
+
 use image;
+use mime::Mime;
 
 // XXX: Move into Piston?
 pub trait AsImageFormat {
@@ -8,15 +10,19 @@ pub trait AsImageFormat {
 
 impl AsImageFormat for Mime {
     fn parse_image_format(&self) -> Option<(Mime, image::ImageFormat)> {
-        Some(match *self {
-            Mime(TopLevel::Image, SubLevel::Png, _) => (self.clone(), image::ImageFormat::PNG),
-            Mime(TopLevel::Image, SubLevel::Jpeg, _) => (self.clone(), image::ImageFormat::JPEG),
-            Mime(TopLevel::Image, SubLevel::Gif, _) => (self.clone(), image::ImageFormat::GIF),
-            Mime(_, SubLevel::Ext(ref i), _) if i == "x-icon" || i == "vnd.microsoft.icon" => (
-                Mime(TopLevel::Image, SubLevel::Ext("x-icon".into()), vec![]),
-                image::ImageFormat::ICO
-            ),
-            _ => return None
-        })
+        if *self == mime::IMAGE_PNG {
+            Some((self.clone(), image::ImageFormat::Png))
+        } else if *self == mime::IMAGE_JPEG {
+            Some((self.clone(), image::ImageFormat::Jpeg))
+        } else if *self == mime::IMAGE_GIF {
+            Some((self.clone(), image::ImageFormat::Gif))
+        } else if self.subtype() == "x-icon" || self.subtype() == "vnd.microsoft.icon" {
+            return Some((
+                Mime::from_str("image/x-icon").unwrap(),
+                image::ImageFormat::Ico,
+            ));
+        } else {
+            return None;
+        }
     }
 }

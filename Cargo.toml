@@ -1,6 +1,7 @@
 [package]
 name = "webicon"
 version = "0.3.3"
+edition = "2021"
 
 authors = ["Markus Unterwaditzer <markus@unterwaditzer.net>"]
 license = "MIT"
@@ -13,11 +14,17 @@ homepage = "https://rust-webicon.unterwaditzer.net/"
 repository = "https://github.com/untitaker/rust-webicon"
 
 [dependencies]
-kuchiki = "0.4.1"
-html5ever = "0.9.0"
-reqwest = "0.4"
-url = "1"
-error-chain = "0.9"
-image = "0.12"
-mime = "0.2"
-html5ever-atoms = "0.1"
+async-trait = "0.1.53"
+error-chain = "0.12"
+futures = "0.3"
+html5ever = "0.26"
+html5ever-atoms = "0.3"
+image = "0.24"
+mime = "0.3"
+pin-utils = "0.1"
+reqwest = "0.11"
+scraper = "0.13.0"
+url = "2.2"
+
+[dev-dependencies]
+tokio-test = "0.4"
