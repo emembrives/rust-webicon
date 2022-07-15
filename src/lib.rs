@@ -49,17 +49,18 @@ impl IconScraper {
     /// # Panics
     ///
     /// If the document is not fetched yet.
-    pub async fn fetch_icons(&mut self) -> IconCollection {
-        let futures = strategies::LinkRelStrategy
-            .get_guesses(self)
-            .await
-            .into_iter()
-            .chain(
-                strategies::DefaultFaviconPathStrategy
-                    .get_guesses(self)
-                    .await
-                    .into_iter(),
+    pub async fn fetch_icons<I: IntoUrl>(url: I) -> IconCollection {
+        let (link_rel_icons, favicon_icons) = {
+            let mut scraper = IconScraper::from_http(url).await;
+            (
+                strategies::LinkRelStrategy.get_guesses(&mut scraper),
+                strategies::DefaultFaviconPathStrategy.get_guesses(&mut scraper),
             )
+        };
+
+        let futures = link_rel_icons
+            .into_iter()
+            .chain(favicon_icons.into_iter())
             .map(|mut icon| async {
                 if icon.fetch_dimensions().await.is_ok() {
                     Some(icon)
@@ -67,6 +68,7 @@ impl IconScraper {
                     None
                 }
             });
+
         let icons = futures::future::join_all(futures)
             .await
             .into_iter()

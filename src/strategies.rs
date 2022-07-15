@@ -1,31 +1,30 @@
 use super::{Icon, IconScraper};
 use async_trait::async_trait;
-use futures::Future;
 use scraper::Selector;
-use std::{pin::Pin, str::FromStr};
+use std::str::FromStr;
 
 #[async_trait]
 pub trait Strategy {
-    fn get_guesses(self, parser: &mut IconScraper) -> Pin<Box<dyn Future<Output = Vec<Icon>>>>;
+    fn get_guesses(self, parser: &mut IconScraper) -> Vec<Icon>;
 }
 
 pub struct DefaultFaviconPathStrategy;
 
 #[async_trait]
 impl Strategy for DefaultFaviconPathStrategy {
-    fn get_guesses(self, parser: &mut IconScraper) -> Pin<Box<dyn Future<Output = Vec<Icon>>>> {
+    fn get_guesses(self, parser: &mut IconScraper) -> Vec<Icon> {
         let icon = Icon::from_url(parser.document_url.join("/favicon.ico").unwrap());
-        Box::pin(futures::future::ready(vec![icon]))
+        vec![icon]
     }
 }
 
 pub struct LinkRelStrategy;
 impl Strategy for LinkRelStrategy {
-    fn get_guesses(self, parser: &mut IconScraper) -> Pin<Box<dyn Future<Output = Vec<Icon>>>> {
+    fn get_guesses(self, parser: &mut IconScraper) -> Vec<Icon> {
         let mut rv = vec![];
         let dom = match parser.dom {
             Some(ref x) => x,
-            None => return Box::pin(futures::future::ready(rv)),
+            None => return rv,
         };
 
         for data in dom.select(&Selector::try_from("link[rel*=icon]").unwrap()) {
@@ -59,7 +58,7 @@ impl Strategy for LinkRelStrategy {
             });
         }
 
-        Box::pin(futures::future::ready(rv))
+        rv
     }
 }
 
@@ -88,7 +87,7 @@ mod tests {
             )),
         };
 
-        let mut icons = tokio_test::block_on(LinkRelStrategy.get_guesses(&mut scraper));
+        let mut icons = LinkRelStrategy.get_guesses(&mut scraper);
         assert_eq!(icons.len(), 1);
         assert_eq!(
             icons.pop().unwrap().url,
@@ -98,9 +97,8 @@ mod tests {
 
     #[test]
     fn test_sharesome() {
-        let scraper = IconScraper::from_http("https://sharesome.5apps.com/");
         assert_eq!(
-            tokio_test::block_on(tokio_test::block_on(scraper).fetch_icons())
+            tokio_test::block_on(IconScraper::fetch_icons("https://sharesome.5apps.com/"))
                 .largest()
                 .unwrap()
                 .url,

@@ -1,9 +1,9 @@
 [package]
 name = "webicon"
-version = "0.3.3"
+version = "0.4.0"
 edition = "2021"
 
-authors = ["Markus Unterwaditzer <markus@unterwaditzer.net>"]
+authors = ["Markus Unterwaditzer <markus@unterwaditzer.net>", "Etienne Membrives <etienne@membrives.fr>"]
 license = "MIT"
 keywords = ["web", "favicon", "scraper", "html"]
 readme = "README.md"
